@@ -137,10 +137,10 @@ class T5Model:
             self.model.resize_token_embeddings(len(self.tokenizer))
         elif model_type == "byt5":
             self.tokenizer = ByT5Tokenizer.from_pretrained(model_name, truncate=True)
+        elif model_type == "codet5":
+            self.tokenizer = RobertaTokenizer.from_pretrained(model_name, truncate=True)
         else:
             self.tokenizer = T5Tokenizer.from_pretrained(model_name, truncate=True)
-        else:
-            self.tokenizer = RobertaTokenizer.from_pretrained(model_name, truncate=True)
 
         if self.args.dynamic_quantize:
             self.model = torch.quantization.quantize_dynamic(
