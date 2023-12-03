@@ -21,6 +21,7 @@ from tqdm.auto import tqdm, trange
 from transformers.models.byt5 import ByT5Tokenizer
 from transformers.models.mt5 import MT5Config, MT5ForConditionalGeneration
 from transformers.models.t5 import T5Config, T5ForConditionalGeneration, T5Tokenizer
+from transformers import RobertaTokenizer
 from transformers.optimization import (
     Adafactor,
     get_constant_schedule,
@@ -56,6 +57,7 @@ MODEL_CLASSES = {
     "t5": (T5Config, T5ForConditionalGeneration),
     "mt5": (MT5Config, MT5ForConditionalGeneration),
     "byt5": (T5Config, T5ForConditionalGeneration),
+    "codet5": (T5Config, T5ForConditionalGeneration),
 }
 
 
@@ -137,6 +139,8 @@ class T5Model:
             self.tokenizer = ByT5Tokenizer.from_pretrained(model_name, truncate=True)
         else:
             self.tokenizer = T5Tokenizer.from_pretrained(model_name, truncate=True)
+        else:
+            self.tokenizer = RobertaTokenizer.from_pretrained(model_name, truncate=True)
 
         if self.args.dynamic_quantize:
             self.model = torch.quantization.quantize_dynamic(
