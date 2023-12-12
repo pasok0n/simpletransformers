@@ -31,6 +31,12 @@ from transformers.optimization import (
     get_linear_schedule_with_warmup,
     get_polynomial_decay_schedule_with_warmup,
 )
+from sklearn.metrics import (
+    confusion_matrix,
+    label_ranking_average_precision_score,
+    matthews_corrcoef,
+    mean_squared_error,
+)
 
 from simpletransformers.config.global_args import global_args
 from simpletransformers.config.model_args import T5Args
@@ -66,6 +72,10 @@ class T5Model:
         self,
         model_type,
         model_name,
+        multi_label=False,
+        label_list=None,
+        num_labels=None,
+        pos_weight=None,
         args=None,
         tokenizer=None,
         use_cuda=True,
@@ -1109,27 +1119,66 @@ class T5Model:
             clean_up_tokenization_spaces=True,
         )
 
-    def compute_metrics(self, labels, preds, **kwargs):
+    # def compute_metrics(self, labels, preds, **kwargs):
+    #     """
+    #     Computes the evaluation metrics for the model predictions.
+
+    #     Args:
+    #         labels: List of target sequences
+    #         preds: List of model generated outputs
+    #         **kwargs: Custom metrics that should be used. Pass in the metrics as keyword arguments (name of metric: function to use).
+    #                     A metric function should take in two parameters. The first parameter will be the true labels, and the second parameter will be the predictions. Both inputs
+    #                     will be lists of strings. Note that this will slow down evaluation significantly as the predicted sequences need to be generated.
+
+    #     Returns:
+    #         result: Dictionary containing evaluation results.
+    #     """  # noqa: ignore flake8"
+    #     assert len(labels) == len(preds)
+
+    #     results = {}
+    #     for metric, func in kwargs.items():
+    #         results[metric] = func(labels, preds)
+
+    #     return results
+
+    def compute_metrics(self, preds, labels, **kwargs):
         """
         Computes the evaluation metrics for the model predictions.
 
         Args:
-            labels: List of target sequences
-            preds: List of model generated outputs
-            **kwargs: Custom metrics that should be used. Pass in the metrics as keyword arguments (name of metric: function to use).
-                        A metric function should take in two parameters. The first parameter will be the true labels, and the second parameter will be the predictions. Both inputs
-                        will be lists of strings. Note that this will slow down evaluation significantly as the predicted sequences need to be generated.
+            preds: Model predictions
+            labels: Ground truth labels
+            **kwargs: Additional metrics that should be used. Pass in the metrics as keyword arguments (name of metric: function to use). E.g. f1=sklearn.metrics.f1_score.
+                        A metric function should take in two parameters. The first parameter will be the true labels, and the second parameter will be the predictions.
 
         Returns:
-            result: Dictionary containing evaluation results.
+            result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
+            wrong: List of InputExample objects corresponding to each incorrect prediction by the model
         """  # noqa: ignore flake8"
-        assert len(labels) == len(preds)
+        assert len(preds) == len(labels)
 
-        results = {}
+        multi_label = self.multi_label
+        extra_metrics = {}
         for metric, func in kwargs.items():
-            results[metric] = func(labels, preds)
+            extra_metrics[metric] = func(labels, preds)
 
-        return results
+        if self.args.regression:
+            return {**extra_metrics}
+
+        if multi_label:
+            label_ranking_score = label_ranking_average_precision_score(labels, preds)
+            return {**{"LRAP": label_ranking_score}, **extra_metrics}
+
+        mcc = matthews_corrcoef(labels, preds)
+
+        if self.model.num_labels == 2:
+            tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
+            return {
+                **{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn},
+                **extra_metrics,
+            }
+        else:
+            return {**{"mcc": mcc}, **extra_metrics}
 
     def _move_model_to_device(self):
         self.model.to(self.device)
