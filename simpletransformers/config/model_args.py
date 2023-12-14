@@ -236,6 +236,7 @@ class T5Args(ModelArgs):
     adafactor_relative_step: bool = False
     adafactor_scale_parameter: bool = False
     adafactor_warmup_init: bool = False
+    regression: bool = False
     learning_rate: float = 1e-3
     optimizer: str = "Adafactor"
     special_tokens_list: list = field(default_factory=list)
