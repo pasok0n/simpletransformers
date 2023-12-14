@@ -1157,7 +1157,7 @@ class T5Model:
         """  # noqa: ignore flake8"
         assert len(preds) == len(labels)
 
-        multi_label = self.multi_label
+        #multi_label = self.multi_label
         extra_metrics = {}
         for metric, func in kwargs.items():
             extra_metrics[metric] = func(labels, preds)
@@ -1165,9 +1165,9 @@ class T5Model:
         if self.args.regression:
             return {**extra_metrics}
 
-        if multi_label:
-            label_ranking_score = label_ranking_average_precision_score(labels, preds)
-            return {**{"LRAP": label_ranking_score}, **extra_metrics}
+        #if multi_label:
+        #    label_ranking_score = label_ranking_average_precision_score(labels, preds)
+        #    return {**{"LRAP": label_ranking_score}, **extra_metrics}
 
         mcc = matthews_corrcoef(labels, preds)
 
