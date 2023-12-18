@@ -74,7 +74,6 @@ class T5Model:
         model_name,
         multi_label=False,
         label_list=None,
-        num_labels=None,
         pos_weight=None,
         args=None,
         tokenizer=None,
@@ -1171,7 +1170,7 @@ class T5Model:
 
         mcc = matthews_corrcoef(labels, preds)
 
-        if self.model.num_labels == 2:
+        if True:
             tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
             return {
                 **{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn},
