@@ -929,7 +929,7 @@ class T5Model:
         )
         os.makedirs(output_dir, exist_ok=True)
 
-        results, _, _  = self.evaluate(
+        result, model_outputs, wrong_preds  = self.evaluate(
             eval_dataset, output_dir, verbose=verbose, silent=silent, **kwargs
         )
         self.results.update(result)
@@ -962,7 +962,7 @@ class T5Model:
         if verbose:
             logger.info(self.results)
 
-        return self.results
+        return result, model_outputs, wrong_preds
 
     def evaluate(self, eval_dataset, output_dir, verbose=True, silent=False, **kwargs):
         """
