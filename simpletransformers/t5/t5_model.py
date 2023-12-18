@@ -615,7 +615,7 @@ class T5Model:
                         and global_step % args.evaluate_during_training_steps == 0
                     ):
                         # Only evaluate when single GPU otherwise metrics may not average well
-                        results = self.eval_model(
+                        results, _, _  = self.eval_model(
                             eval_data,
                             verbose=verbose and args.evaluate_during_training_verbose,
                             silent=args.evaluate_during_training_silent,
@@ -768,7 +768,7 @@ class T5Model:
                 self.save_model(output_dir_current, optimizer, scheduler, model=model)
 
             if args.evaluate_during_training and args.evaluate_each_epoch:
-                results = self.eval_model(
+                results, _, _  = self.eval_model(
                     eval_data,
                     verbose=verbose and args.evaluate_during_training_verbose,
                     silent=args.evaluate_during_training_silent,
@@ -929,7 +929,7 @@ class T5Model:
         )
         os.makedirs(output_dir, exist_ok=True)
 
-        result = self.evaluate(
+        results, _, _  = self.evaluate(
             eval_dataset, output_dir, verbose=verbose, silent=silent, **kwargs
         )
         self.results.update(result)
