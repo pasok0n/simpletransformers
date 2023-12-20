@@ -277,6 +277,7 @@ class T5Model:
         model = self.model
         args = self.args
         device = self.device
+        tokenizer = self.tokenizer
 
         tb_writer = SummaryWriter(log_dir=args.tensorboard_dir)
         train_sampler = RandomSampler(train_dataset)
@@ -1009,8 +1010,13 @@ class T5Model:
             eval_dataloader, disable=args.silent or silent, desc="Running Evaluation"
         ):
             inputs = self._get_inputs_dict(batch)
-            # Move all tensors in the dictionary to the specified device
-            inputs = {key: value.to(device) for key, value in inputs.items()}
+            # Identify the current device of the first tensor in the dictionary
+            first_tensor_device = next(iter(inputs.values())).device
+
+            # Check if all tensors in the dictionary are on the same device
+            if any(tensor.device != first_tensor_device for tensor in inputs.values()):
+                # Move all tensors in the dictionary to the device of the first tensor
+                inputs = {key: value.to(first_tensor_device) for key, value in inputs.items()}
             with torch.no_grad():
                 if self.args.fp16:
                     with amp.autocast():
