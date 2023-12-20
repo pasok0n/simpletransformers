@@ -1025,9 +1025,7 @@ class T5Model:
             if self.args.use_hf_datasets:
                 batch = batch["input_ids"]
 
-            inputs, labels = (
-                mask_tokens(batch, tokenizer, args) if args.mlm else (batch, batch)
-            )
+            inputs, labels = (batch, batch)
             inputs = inputs.to(self.device)
             with torch.no_grad():
                 if self.args.fp16:
