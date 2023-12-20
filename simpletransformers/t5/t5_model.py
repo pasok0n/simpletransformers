@@ -1029,7 +1029,6 @@ class T5Model:
                 mask_tokens(batch, tokenizer, args) if args.mlm else (batch, batch)
             )
             inputs = inputs.to(self.device)
-            inputs = self._get_inputs_dict(batch).to(self.device)
             with torch.no_grad():
                 if self.args.fp16:
                     with amp.autocast():
