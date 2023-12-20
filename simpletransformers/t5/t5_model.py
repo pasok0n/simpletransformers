@@ -1008,7 +1008,7 @@ class T5Model:
         for batch in tqdm(
             eval_dataloader, disable=args.silent or silent, desc="Running Evaluation"
         ):
-            inputs = self._get_inputs_dict(batch)
+            inputs = self._get_inputs_dict(batch).to(self.device)
             with torch.no_grad():
                 if self.args.fp16:
                     with amp.autocast():
