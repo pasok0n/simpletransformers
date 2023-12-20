@@ -8,7 +8,6 @@ from dataclasses import asdict
 from multiprocessing import Pool, cpu_count
 from os import truncate
 from pathlib import Path
-from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -43,11 +42,6 @@ from simpletransformers.config.global_args import global_args
 from simpletransformers.config.model_args import T5Args
 from simpletransformers.config.utils import sweep_config_to_sweep_values
 from simpletransformers.t5.t5_utils import T5Dataset, load_hf_dataset
-from simpletransformers.language_modeling.language_modeling_utils import (
-    SimpleDataset,
-    load_hf_dataset,
-    mask_tokens,
-)
 
 try:
     import wandb
@@ -990,16 +984,8 @@ class T5Model:
         args = self.args
         eval_output_dir = output_dir
         device = self.device
-        tokenizer = self.tokenizer
 
         results = {}
-
-        def collate(examples: List[torch.Tensor]):
-            if tokenizer._pad_token is None:
-                return pad_sequence(examples, batch_first=True)
-            return pad_sequence(
-                examples, batch_first=True, padding_value=tokenizer.pad_token_id
-            )
 
         eval_sampler = SequentialSampler(eval_dataset)
         eval_dataloader = DataLoader(
@@ -1022,13 +1008,9 @@ class T5Model:
         for batch in tqdm(
             eval_dataloader, disable=args.silent or silent, desc="Running Evaluation"
         ):
-            if self.args.use_hf_datasets:
-                batch = batch["input_ids"]
-
-            inputs, labels = (
-                mask_tokens(batch, tokenizer, args) if True else (batch, batch)
-            )
-            inputs = inputs.to(self.device)
+            inputs = self._get_inputs_dict(batch)
+            # Move all tensors in the dictionary to the specified device
+            inputs = {key: value.to(device) for key, value in inputs.items()}
             with torch.no_grad():
                 if self.args.fp16:
                     with amp.autocast():
