@@ -451,6 +451,15 @@ class T5Model:
         if args.n_gpu > 1:
             model = torch.nn.DataParallel(model)
 
+                # Distributed training
+        if args.local_rank != -1:
+            model = torch.nn.parallel.DistributedDataParallel(
+                model,
+                device_ids=[args.local_rank],
+                output_device=args.local_rank,
+                find_unused_parameters=True,
+            )
+
         logger.info(" Training started")
 
         global_step = 0
